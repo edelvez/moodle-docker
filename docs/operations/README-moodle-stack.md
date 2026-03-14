@@ -4,7 +4,7 @@ Este directorio describe la operacion de un stack de Moodle 5.0.2 para produccio
 
 ## Servicios
 
-- `moodle`: aplicacion web Moodle (imagen custom basada en Bitnami Legacy 5.0.2).
+- `moodle`: aplicacion web Moodle (imagen preconstruida Bitnami Legacy 5.0.2).
 - `postgres`: base de datos PostgreSQL 16.
 - `redis`: cache/sesiones.
 - `cron`: ejecucion de `admin/cli/cron.php` cada minuto.

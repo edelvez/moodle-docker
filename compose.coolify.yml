@@ -31,10 +31,7 @@ services:
       - internal
 
   moodle:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: moodle:${MOODLE_IMAGE_TAG:-5.0.2}
+    image: bitnamilegacy/moodle:${MOODLE_IMAGE_TAG:-5.0.2}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -79,7 +76,7 @@ services:
       - internal
 
   cron:
-    image: moodle:${MOODLE_IMAGE_TAG:-5.0.2}
+    image: bitnamilegacy/moodle:${MOODLE_IMAGE_TAG:-5.0.2}
     restart: unless-stopped
     depends_on:
       moodle:
