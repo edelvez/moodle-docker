@@ -61,7 +61,6 @@ Red:
 
 Definir en Coolify (no hardcodear en compose):
 
-- `POSTGRES_PASSWORD`
 - `MOODLE_DATABASE_PASSWORD`
 - `REDIS_PASSWORD`
 - `MOODLE_ADMIN_PASSWORD`
