@@ -3,13 +3,13 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${MOODLE_DATABASE_NAME}
-      POSTGRES_USER: ${MOODLE_DATABASE_USER}
+      POSTGRES_DB: ${MOODLE_DATABASE_NAME:-moodle}
+      POSTGRES_USER: ${MOODLE_DATABASE_USER:-moodle}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${MOODLE_DATABASE_USER} -d ${MOODLE_DATABASE_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${MOODLE_DATABASE_USER:-moodle} -d ${MOODLE_DATABASE_NAME:-moodle}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -32,7 +32,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: moodle:${MOODLE_IMAGE_TAG}
+    image: moodle:${MOODLE_IMAGE_TAG:-5.1.2}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -41,11 +41,11 @@ services:
         condition: service_healthy
     environment:
       MOODLE_HOST: ${MOODLE_HOST}
-      MOODLE_DATABASE_TYPE: ${MOODLE_DATABASE_TYPE}
+      MOODLE_DATABASE_TYPE: ${MOODLE_DATABASE_TYPE:-pgsql}
       MOODLE_DATABASE_HOST: postgres
       MOODLE_DATABASE_PORT_NUMBER: 5432
-      MOODLE_DATABASE_NAME: ${MOODLE_DATABASE_NAME}
-      MOODLE_DATABASE_USER: ${MOODLE_DATABASE_USER}
+      MOODLE_DATABASE_NAME: ${MOODLE_DATABASE_NAME:-moodle}
+      MOODLE_DATABASE_USER: ${MOODLE_DATABASE_USER:-moodle}
       MOODLE_DATABASE_PASSWORD: ${MOODLE_DATABASE_PASSWORD}
       MOODLE_USERNAME: ${MOODLE_ADMIN_USERNAME}
       MOODLE_PASSWORD: ${MOODLE_ADMIN_PASSWORD}
@@ -77,17 +77,17 @@ services:
       - internal
 
   cron:
-    image: moodle:${MOODLE_IMAGE_TAG}
+    image: moodle:${MOODLE_IMAGE_TAG:-5.1.2}
     restart: unless-stopped
     depends_on:
       moodle:
         condition: service_healthy
     environment:
-      MOODLE_DATABASE_TYPE: ${MOODLE_DATABASE_TYPE}
+      MOODLE_DATABASE_TYPE: ${MOODLE_DATABASE_TYPE:-pgsql}
       MOODLE_DATABASE_HOST: postgres
       MOODLE_DATABASE_PORT_NUMBER: 5432
-      MOODLE_DATABASE_NAME: ${MOODLE_DATABASE_NAME}
-      MOODLE_DATABASE_USER: ${MOODLE_DATABASE_USER}
+      MOODLE_DATABASE_NAME: ${MOODLE_DATABASE_NAME:-moodle}
+      MOODLE_DATABASE_USER: ${MOODLE_DATABASE_USER:-moodle}
       MOODLE_DATABASE_PASSWORD: ${MOODLE_DATABASE_PASSWORD}
       MOODLE_REDIS_HOST: redis
       MOODLE_REDIS_PORT: "6379"
@@ -116,10 +116,10 @@ services:
     environment:
       PGHOST: postgres
       PGPORT: 5432
-      PGDATABASE: ${MOODLE_DATABASE_NAME}
-      PGUSER: ${MOODLE_DATABASE_USER}
+      PGDATABASE: ${MOODLE_DATABASE_NAME:-moodle}
+      PGUSER: ${MOODLE_DATABASE_USER:-moodle}
       PGPASSWORD: ${MOODLE_DATABASE_PASSWORD}
-      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
     command:
       - /bin/sh
       - -ec
