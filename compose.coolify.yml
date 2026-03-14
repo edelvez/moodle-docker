@@ -1,0 +1,147 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${MOODLE_DATABASE_NAME}
+      POSTGRES_USER: ${MOODLE_DATABASE_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MOODLE_DATABASE_USER} -d ${MOODLE_DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+  moodle:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: moodle:${MOODLE_IMAGE_TAG}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      MOODLE_HOST: ${MOODLE_HOST}
+      MOODLE_DATABASE_TYPE: ${MOODLE_DATABASE_TYPE}
+      MOODLE_DATABASE_HOST: postgres
+      MOODLE_DATABASE_PORT_NUMBER: 5432
+      MOODLE_DATABASE_NAME: ${MOODLE_DATABASE_NAME}
+      MOODLE_DATABASE_USER: ${MOODLE_DATABASE_USER}
+      MOODLE_DATABASE_PASSWORD: ${MOODLE_DATABASE_PASSWORD}
+      MOODLE_USERNAME: ${MOODLE_ADMIN_USERNAME}
+      MOODLE_PASSWORD: ${MOODLE_ADMIN_PASSWORD}
+      MOODLE_EMAIL: ${MOODLE_ADMIN_EMAIL}
+      MOODLE_SMTP_HOST: ${MOODLE_SMTP_HOST}
+      MOODLE_SMTP_PORT_NUMBER: ${MOODLE_SMTP_PORT_NUMBER}
+      MOODLE_SMTP_USER: ${MOODLE_SMTP_USER}
+      MOODLE_SMTP_PASSWORD: ${MOODLE_SMTP_PASSWORD}
+      MOODLE_SMTP_PROTOCOL: ${MOODLE_SMTP_PROTOCOL}
+      MOODLE_REVERSEPROXY: "yes"
+      MOODLE_SSLPROXY: "yes"
+      MOODLE_REDIS_HOST: redis
+      MOODLE_REDIS_PORT: "6379"
+      MOODLE_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      ALLOW_EMPTY_PASSWORD: "no"
+      BITNAMI_DEBUG: "false"
+    volumes:
+      - moodledata:/bitnami/moodledata
+      - moodle:/bitnami/moodle
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    networks:
+      - internal
+
+  cron:
+    image: moodle:${MOODLE_IMAGE_TAG}
+    restart: unless-stopped
+    depends_on:
+      moodle:
+        condition: service_healthy
+    environment:
+      MOODLE_DATABASE_TYPE: ${MOODLE_DATABASE_TYPE}
+      MOODLE_DATABASE_HOST: postgres
+      MOODLE_DATABASE_PORT_NUMBER: 5432
+      MOODLE_DATABASE_NAME: ${MOODLE_DATABASE_NAME}
+      MOODLE_DATABASE_USER: ${MOODLE_DATABASE_USER}
+      MOODLE_DATABASE_PASSWORD: ${MOODLE_DATABASE_PASSWORD}
+      MOODLE_REDIS_HOST: redis
+      MOODLE_REDIS_PORT: "6379"
+      MOODLE_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      ALLOW_EMPTY_PASSWORD: "no"
+    command:
+      - /bin/bash
+      - -ec
+      - |
+        while true; do
+          php /bitnami/moodle/admin/cli/cron.php || true
+          sleep 60
+        done
+    volumes:
+      - moodledata:/bitnami/moodledata
+      - moodle:/bitnami/moodle
+    networks:
+      - internal
+
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: ${MOODLE_DATABASE_NAME}
+      PGUSER: ${MOODLE_DATABASE_USER}
+      PGPASSWORD: ${MOODLE_DATABASE_PASSWORD}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS}
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        chmod +x /scripts/backup.sh
+        while true; do
+          /scripts/backup.sh
+          sleep 86400
+        done
+    volumes:
+      - moodledata:/bitnami/moodledata:ro
+      - backups:/backups
+      - ./scripts:/scripts:ro
+    networks:
+      - internal
+
+volumes:
+  postgres_data:
+  moodle:
+  moodledata:
+  backups:
+
+networks:
+  internal:
+    driver: bridge
