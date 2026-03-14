@@ -1,10 +1,10 @@
-# Moodle 5.1.2 Stack for Coolify
+# Moodle 5.0.2 Stack for Coolify
 
-Este directorio describe la operacion de un stack de Moodle 5.1.2 para produccion en Coolify.
+Este directorio describe la operacion de un stack de Moodle 5.0.2 para produccion en Coolify.
 
 ## Servicios
 
-- `moodle`: aplicacion web Moodle (imagen custom basada en Bitnami 5.1.2).
+- `moodle`: aplicacion web Moodle (imagen custom basada en Bitnami Legacy 5.0.2).
 - `postgres`: base de datos PostgreSQL 16.
 - `redis`: cache/sesiones.
 - `cron`: ejecucion de `admin/cli/cron.php` cada minuto.
