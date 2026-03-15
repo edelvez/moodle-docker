@@ -9,7 +9,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${MOODLE_DATABASE_USER:-moodle} -d ${MOODLE_DATABASE_NAME:-moodle}"]
+      test: ["CMD-SHELL", "pg_isready -U ${MOODLE_DATABASE_USER:-postgres} -d ${MOODLE_DATABASE_NAME:-moodle}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -67,69 +67,10 @@ services:
     networks:
       - internal
 
-  # cron:
-  #   image: bitnamilegacy/moodle:${MOODLE_IMAGE_TAG:-5.0.2}
-  #   restart: unless-stopped
-  #   depends_on:
-  #     moodle:
-  #       condition: service_started
-  #   entrypoint:
-  #     - /bin/bash
-  #     - -ec
-  #   command:
-  #     - |
-  #       while true; do
-  #         php /bitnami/moodle/admin/cli/cron.php || true
-  #         sleep 60
-  #       done
-  #   volumes:
-  #     - moodledata:/bitnami/moodledata
-  #     - moodle:/bitnami/moodle
-  #   networks:
-  #     - internal
-
-  # backup:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      PGHOST: postgres
-      PGPORT: 5432
-      PGDATABASE: ${MOODLE_DATABASE_NAME:-moodle}
-      PGUSER: ${MOODLE_DATABASE_USER:-postgres}
-      PGPASSWORD: ${MOODLE_DATABASE_PASSWORD}
-      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
-    command:
-      - /bin/sh
-      - -ec
-      - |
-        while true; do
-          now="$(date -u +%Y%m%dT%H%M%SZ)"
-          retention="$${BACKUP_RETENTION_DAYS:-7}"
-          db_file="/backups/postgres-$${now}.sql.gz"
-          data_file="/backups/moodledata-$${now}.tar.gz"
-
-          pg_dump --no-owner --no-privileges | gzip -9 > "$${db_file}"
-          tar -C /bitnami -czf "$${data_file}" moodledata
-
-          find /backups -type f -name "postgres-*.sql.gz" -mtime "+$${retention}" -delete
-          find /backups -type f -name "moodledata-*.tar.gz" -mtime "+$${retention}" -delete
-
-          sleep 86400
-        done
-    volumes:
-      - moodledata:/bitnami/moodledata:ro
-      - backups:/backups
-    networks:
-      - internal
-
 volumes:
   postgres_data:
   moodle:
   moodledata:
-  # backups:
 
 networks:
   internal:
