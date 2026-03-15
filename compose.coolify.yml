@@ -115,15 +115,23 @@ services:
       - /bin/sh
       - -ec
       - |
-        chmod +x /scripts/backup.sh
         while true; do
-          /scripts/backup.sh
+          now="$(date -u +%Y%m%dT%H%M%SZ)"
+          retention="$${BACKUP_RETENTION_DAYS:-7}"
+          db_file="/backups/postgres-$${now}.sql.gz"
+          data_file="/backups/moodledata-$${now}.tar.gz"
+
+          pg_dump --no-owner --no-privileges | gzip -9 > "$${db_file}"
+          tar -C /bitnami -czf "$${data_file}" moodledata
+
+          find /backups -type f -name "postgres-*.sql.gz" -mtime "+$${retention}" -delete
+          find /backups -type f -name "moodledata-*.tar.gz" -mtime "+$${retention}" -delete
+
           sleep 86400
         done
     volumes:
       - moodledata:/bitnami/moodledata:ro
       - backups:/backups
-      - ./scripts:/scripts:ro
     networks:
       - internal
 
