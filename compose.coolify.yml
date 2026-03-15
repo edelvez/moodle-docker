@@ -74,6 +74,7 @@ services:
       moodle:
         condition: service_started
     environment:
+      MOODLE_SKIP_BOOTSTRAP: "yes"
       MOODLE_DATABASE_TYPE: ${MOODLE_DATABASE_TYPE:-pgsql}
       MOODLE_DATABASE_HOST: postgres
       MOODLE_DATABASE_PORT_NUMBER: 5432
