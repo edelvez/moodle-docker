@@ -67,28 +67,28 @@ services:
     networks:
       - internal
 
-  cron:
-    image: bitnamilegacy/moodle:${MOODLE_IMAGE_TAG:-5.0.2}
-    restart: unless-stopped
-    depends_on:
-      moodle:
-        condition: service_started
-    entrypoint:
-      - /bin/bash
-      - -ec
-    command:
-      - |
-        while true; do
-          php /bitnami/moodle/admin/cli/cron.php || true
-          sleep 60
-        done
-    volumes:
-      - moodledata:/bitnami/moodledata
-      - moodle:/bitnami/moodle
-    networks:
-      - internal
+  # cron:
+  #   image: bitnamilegacy/moodle:${MOODLE_IMAGE_TAG:-5.0.2}
+  #   restart: unless-stopped
+  #   depends_on:
+  #     moodle:
+  #       condition: service_started
+  #   entrypoint:
+  #     - /bin/bash
+  #     - -ec
+  #   command:
+  #     - |
+  #       while true; do
+  #         php /bitnami/moodle/admin/cli/cron.php || true
+  #         sleep 60
+  #       done
+  #   volumes:
+  #     - moodledata:/bitnami/moodledata
+  #     - moodle:/bitnami/moodle
+  #   networks:
+  #     - internal
 
-  backup:
+  # backup:
     image: postgres:16-alpine
     restart: unless-stopped
     depends_on:
@@ -129,7 +129,7 @@ volumes:
   postgres_data:
   moodle:
   moodledata:
-  backups:
+  # backups:
 
 networks:
   internal:
