@@ -73,21 +73,10 @@ services:
     depends_on:
       moodle:
         condition: service_started
-    environment:
-      MOODLE_SKIP_BOOTSTRAP: "yes"
-      MOODLE_DATABASE_TYPE: ${MOODLE_DATABASE_TYPE:-pgsql}
-      MOODLE_DATABASE_HOST: postgres
-      MOODLE_DATABASE_PORT_NUMBER: 5432
-      MOODLE_DATABASE_NAME: ${MOODLE_DATABASE_NAME:-moodle}
-      MOODLE_DATABASE_USER: ${MOODLE_DATABASE_USER:-postgres}
-      MOODLE_DATABASE_PASSWORD: ${MOODLE_DATABASE_PASSWORD}
-      MOODLE_REDIS_HOST: redis
-      MOODLE_REDIS_PORT: "6379"
-      MOODLE_REDIS_PASSWORD: ${REDIS_PASSWORD}
-      ALLOW_EMPTY_PASSWORD: "no"
-    command:
+    entrypoint:
       - /bin/bash
       - -ec
+    command:
       - |
         while true; do
           php /bitnami/moodle/admin/cli/cron.php || true
